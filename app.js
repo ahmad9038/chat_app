@@ -26,13 +26,13 @@ app.use(fetchDataRouter);
 app.use(chatRouter);
 app.use(messageRouter);
 
-// // Serve static files
-// app.use(express.static(path.join(__dirname, "./client/build")));
+// Serve static files
+app.use(express.static(path.join(__dirname, "./client/build")));
 
-// // Handle all remaining routes by serving the index.html file
-// app.get("*", function (req, res) {
-//   res.sendFile(path.join(__dirname, "./client/build/index.html"));
-// });
+// Handle all remaining routes by serving the index.html file
+app.get("*", function (req, res) {
+  res.sendFile(path.join(__dirname, "./client/build/index.html"));
+});
 
 app.listen(port, () => {
   console.log(`Listening on port ${port}`.bgGreen);
