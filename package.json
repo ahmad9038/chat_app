@@ -4,12 +4,11 @@
   "description": "",
   "main": "index.js",
  "scripts": {
-  "start": "node app.js",
-  "server": "nodemon app.js",
-  "client": "npm --prefix client start",
-  "build": "npm --prefix client run build",
-  "dev": "concurrently \"npm start\" \"npm run client\""
-},
+    "start": "node app.js",
+    "server": "nodemon app.js",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"npm start\" \"npm run client\""
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
