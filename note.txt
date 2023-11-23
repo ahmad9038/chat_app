@@ -1,0 +1,546 @@
+app.js:
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 5000;
+const colors = require('colors');
+require('./dbConnection');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
+
+app.use(cors());
+app.use(express.json());
+dotenv.config({ path: './config.env' });
+app.use(cookieParser());
+
+// Routers
+app.use(require('./router/userRoute'));
+app.use(require('./router/contactRoute'));
+app.use(require('./router/fetchData'));
+app.use(require('./router/messageRoute'));
+
+app.get('/', (req, res) => {
+  res.send('Hello, world!');
+});
+
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`.bgGreen);
+});
+
+module.exports = app; // Export the app object
+
+
+
+
+
+
+
+
+
+
+
+
+Home.js:
+import React, { useEffect, useState } from 'react'
+import axios from 'axios';
+
+//components
+import ContactBox from '../components/ContactBox';
+import Login from '../components/Login';
+import Signup from '../components/Signup';
+import { useFilterContext } from '../context/filterContext'
+import HeaderLeftSection from '../components/HeaderLeftSection'
+import AddContactForm from '../components/AddContactForm';
+import DeleteContactForm from '../components/DeleteContactForm';
+import HeaderRightSection from '../components/HeaderRightSection';
+import TextBox from '../components/TextBox';
+import { useMessageContext } from '../context/messageContext';
+import MessageTypeSection from '../components/MessageTypeSection';
+import ProfileData from '../components/ProfileData';
+
+
+
+const Home = () => {
+    const { filterContacts } = useFilterContext()
+    const { allMessages } = useMessageContext()
+    // we create useState and function here and define this function as attribute in HeaderLeftSection and then in the HeaderLeftSection we created another function and define this function to that and on click the icon in HeaderLeftSection our function works 
+    const [showMessages, setShowMessages] = useState(true);
+    const toggleMessages = () => {
+        setShowMessages(false);
+    };
+
+
+    const [showDeleteForm, setShowDeleteForm] = useState(true);
+    const toggleDeleteForm = () => {
+        setShowDeleteForm(false)
+    }
+
+
+    // for showing profile data
+    const [showProfileForm, setShowProfileForm] = useState(true);
+    const toggleProfileForm = () => {
+        setShowProfileForm(false);
+    }
+
+
+    // for responsive show message section
+    const [messageSection, setMessagesSection] = useState(false);
+    const toggleMessageSection = () => {
+        console.log(messageSection)
+        setMessagesSection(!messageSection);
+    }
+
+
+
+
+    // when i press this cross icon which is present in contact form then this show messages again true
+    const closeContactForm = () => {
+        setShowMessages(true)
+    }
+
+    const closeDeleteForm = () => {
+        setShowDeleteForm(true)
+    }
+
+    // for closing profile data form
+    const closeProfileForm = () => {
+        setShowProfileForm(true)
+    }
+
+
+    // select current contact 
+    const [selectedContact, setSelectedContact] = useState(null);
+    const handleContactClick = (id) => {
+        setSelectedContact(id)
+        console.log(selectedContact)
+    };
+
+    // delete contact 
+    const handleContactDelete = (id) => {
+        axios.delete(`http://localhost:5000/deleteContact/${id}`)
+            .then((response) => {
+                console.log(response.data.message);
+                // Handle success, e.g., update the contact list
+            })
+            .catch((error) => {
+                console.error(error);
+                // Handle error, e.g., display an error message
+            });
+
+        setShowDeleteForm(true)
+    };
+
+
+
+    //delete chat
+    const handleChatDelete = (id) => {
+        axios.delete(`http://localhost:5000/deleteChat/${id}`)
+            .then((response) => {
+                console.log(response.data.message);
+            })
+            .catch((error) => {
+                console.error(error);
+            })
+    };
+
+
+
+
+
+    let isSelected;
+    return (
+        <>
+            <div className="parent">
+                <div className="container">
+
+                    {/* left section  */}
+                    <div className="left-section">
+                        <div className={`content-wrapper ${!showMessages || !showDeleteForm || !showProfileForm ? 'blur' : ''}`}>
+                            {/* header */}
+                            <HeaderLeftSection contactId={selectedContact} toggleMessages={toggleMessages} toggleDeleteForm={toggleDeleteForm} toggleProfileForm={toggleProfileForm} />
+
+                            {/* contacts here */}
+                            <div className="messages">
+                                {filterContacts.map((cur) => (
+                                    <div onClick={() => {
+                                        handleContactClick(cur._id);
+                                        toggleMessageSection();
+                                    }} key={cur._id}>
+                                        <ContactBox name={cur.name} phone={cur.phone} isSelected={selectedContact === cur._id} />
+                                    </div>
+
+                                ))}
+                            </div>
+                        </div>
+
+                        {<AddContactForm showMessages={showMessages} closeContactForm={closeContactForm} />}
+                        {<DeleteContactForm handleContactDelete={handleContactDelete} showDeleteForm={showDeleteForm} contactId={selectedContact} closeDeleteForm={closeDeleteForm} />}
+                        {<ProfileData showProfileForm={showProfileForm} closeProfileForm={closeProfileForm} />}
+                    </div>
+
+
+
+
+
+
+
+                    {/* right section  */}
+                    <div className={messageSection ? "right-section show" : "right-section hide"}>
+                        <div className="header">
+                            <HeaderRightSection toggleMessageSection={toggleMessageSection} handleChatDelete={handleChatDelete} contactId={selectedContact} />
+                        </div>
+
+                        {/* messages */}
+                        <div className="messages">
+                            {allMessages
+                                .filter((cur) => cur.contactId === selectedContact)
+                                .map((cur) => (
+                                    <TextBox key={cur._id} cur={cur} />
+                                ))}
+                            {allMessages.filter((cur) => cur.contactId === selectedContact).length === 0 && (
+                                <div className="empty-message">No Chat</div>
+                            )}
+                        </div>
+
+                        {/* type section  */}
+                        <div className="message-input">
+                            <MessageTypeSection selectedContact={selectedContact} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+}
+
+export default Home
+
+
+
+
+
+
+
+
+
+
+
+
+
+AddContactForm.js:
+import React, { useEffect, useState } from 'react';
+import styles from '../css/AddContactForm.module.css';
+import contactImage from '../img/profileImg.jpg';
+import { RxCross1 } from 'react-icons/rx';
+
+const AddContactForm = ({ closeContactForm, showMessages }) => {
+    const toggleContactForm = () => {
+        closeContactForm();
+        setErrorMessage('')
+    };
+
+    // State to store the contacts
+    const [contacts, setContacts] = useState([]);
+    const [errorMessage, setErrorMessage] = useState('')
+
+    // Fetch contacts from the server
+    const fetchContacts = async () => {
+        try {
+            const res = await fetch('http://localhost:5000/contacts');
+            const data = await res.json();
+            setContacts(data.contacts);
+        } catch (error) {
+            console.log('Error fetching contacts:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchContacts();
+    }, []);
+
+
+    // to handle the inputs
+    const [user, setUser] = useState({
+        name: '', phone: ''
+    });
+
+    let name, value;
+    const handleInputs = (e) => {
+        name = e.target.name
+        value = e.target.value;
+
+        setUser({ ...user, [name]: value })
+    }
+
+
+    // fetch from the server
+    const postData = async (e) => {
+        e.preventDefault();
+        const { name, phone } = user;
+        const res = await fetch('http://localhost:5000/createContact', {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name, phone
+            })
+        })
+        const data = await res.json();
+
+
+        
+        if(data.message === 'created') {
+            setErrorMessage('')
+            toggleContactForm()
+            setUser({name:'', phone:''})
+        }
+        else if (data.error === 'alreadyAvaliable') {
+            // window.alert("Invalid Credentials")
+            setErrorMessage('Contact Already Added')
+        }
+
+        else if(data.error){
+            setErrorMessage('Fill All Fields')
+        }
+
+        else if (data.message) {
+            setErrorMessage('Enter at least 11 digits')
+        }
+    }
+
+
+
+
+
+
+
+    return (
+        <div className={styles.parent}>
+            <div className={`${styles.container} ${!showMessages ? styles.show : styles.hide}`}>
+                <h1>Add New Contact</h1>
+                <div className={styles.crossIcon} onClick={toggleContactForm}>
+                    <RxCross1 />
+                </div>
+                <form method="POST">
+                    <div className={styles.inputContainer}>
+                        <input type="text" name="name" onChange={handleInputs} value={user.name} required />
+                        <label htmlFor="username">Name</label>
+                    </div>
+                    <div className={styles.inputContainer}>
+                        <input type="number" name="phone" onChange={handleInputs} value={user.phone} required />
+                        <label htmlFor="password">Phone</label>
+                    </div>
+                    <button onClick={postData} type="submit">Add Contact</button>
+                </form>
+                <div style={{ marginTop: '10px', color: "red" }} >{errorMessage}</div>
+            </div>
+        </div>
+    );
+};
+
+export default AddContactForm;
+
+
+
+
+
+
+
+
+
+contactContext.js:
+import React, { createContext, useContext, useEffect, useReducer } from "react";
+import axios from 'axios'
+import contactReducer from "../reducer/contactReducer";
+
+const contactContext = createContext();
+const API = 'http://localhost:5000/contacts'; // update the API URL here
+
+const initialState = {
+    allContacts: [],
+    isLoading: false,
+    isError: false,
+}
+
+const ContactProvider = ({ children }) => {
+    const [state, dispatch] = useReducer(contactReducer, initialState)
+
+    const getContacts = async (url) => {
+        dispatch({ type: 'SET_LOADING' })
+        try {
+            const res = await axios.get(url);
+            const contacts = await res.data;
+            dispatch({ type: 'SET_CONTACT_DATA', payload: contacts })
+        } catch (error) {
+            dispatch({ type: 'API_ERROR' })
+            console.log(error)
+        }
+    }
+
+    useEffect(() => {
+        getContacts(API);
+    }, []);
+
+    console.log(state.allContacts)
+
+    return (
+        <contactContext.Provider value={{ ...state }}>
+            {children}
+        </contactContext.Provider>
+    );
+}
+
+const useContactContext = () => {
+    return useContext(contactContext);
+}
+
+export { ContactProvider, useContactContext };
+
+
+
+
+
+
+
+
+contactReducer:
+const contactReducer = (state, action) => {
+    switch (action.type) {
+      case 'SET_LOADING':
+        return {
+          ...state,
+          isLoading: true,
+        };
+      case 'SET_CONTACT_DATA':
+        return {
+          ...state,
+          isLoading: false,
+          allContacts: action.payload,
+        };
+      case 'API_ERROR':
+        return {
+          ...state,
+          isLoading: false,
+          isError: true,
+        };
+      default:
+        return state;
+    }
+  };
+  
+  export default contactReducer;
+  
+
+
+
+
+
+
+
+  dbConnection.js:
+  const mongoose = require('mongoose');
+const colors = require('colors');
+require('dotenv').config();
+const User = require('./models/userSchema');
+const jwt = require('jsonwebtoken');
+const { useEffect } = require('react');
+
+const db = 'mongodb+srv://ahmad:ahmad@cluster0.rfpnfwi.mongodb.net/MessageApp?retryWrites=true&w=majority';
+
+mongoose.connect(db)
+  .then(async () => {
+    console.log('Connected!'.bgGreen);
+
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NDZiMzRjMjMzNWEzNjkzNjJhOGQ0OGIiLCJpYXQiOjE2ODQ4MTAyNTJ9.bBfpCHwUSW1CC6QC1Wa8PbV0z-OqnlzBddmzcVtQRlw';
+    const verifyToken = jwt.verify(token, process.env.SECRET_KEY);
+    const rootUser = await User.findOne({ _id: verifyToken._id, "tokens.token": token });
+    if (!rootUser) {
+      console.log('not found');
+      return null;
+    }
+
+    const collection = await mongoose.connection.db.collection(`${rootUser._id}_contacts`);
+    const messageCollection = await mongoose.connection.db.collection('messages');
+    const usersCollection = await mongoose.connection.db.collection('users');
+
+    const fetchedData = await collection.find({}).toArray();
+    const fetchMessage = await messageCollection.find({}).toArray();
+    const fetchUsers = await usersCollection.find({}).toArray();
+    global.users = fetchUsers;
+    global.contacts = fetchedData;
+    global.messages = fetchMessage;
+
+    // Create change stream on the collection
+    const changeStream = collection.watch();
+
+    changeStream.on('change', async (change) => {
+      if (change.operationType === 'insert') {
+        const newDocument = change.fullDocument;
+        console.log('New document inserted:', newDocument);
+
+        // Update your server data with the new document
+        // For example, push the new document to the contacts array
+        global.contacts.push(newDocument);
+      }
+    });
+  })
+  .catch(() => console.log('Connection Error!'.bgRed));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+fetchData.js:
+const express = require('express')
+const router = express.Router()
+
+router.get('/contacts', async(req,res)=>{
+    try {
+        const contacts = global.contacts
+        res.json(contacts);
+    } catch (error) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+})
+
+router.get('/messages', async(req,res)=>{
+    try {
+        const messages = global.messages;
+        res.json(messages);
+    } catch (error) {
+        console.log(error)
+        res.status(500).send('Server Error');
+    }
+})
+
+router.get('/users', async(req,res)=>{
+    try {
+        const users = global.users;
+        res.json(users)
+    } catch (error) {
+        console.log(error)
+        res.status(500).send('Server Error');
+    }
+})
+
+module.exports = router;
+
+
+
+
+
+
+
+(these are all the files i used in my MERN stack, the problem is that when i submit a new contact in my database from my client side using a form, the new contact added in my data base but if i refresh the page on which my client localhost is hosting it then shows, i want that the new contact will be fethced eaily without refreshing or restarting the server or page, in other words i want to get the contact in real time, like the messages or chats on our wattsapp which is also a real time messages first stored in the data base and then send or fetched in the real time, please solve the problem by updating the code, i just want to copy and then paste bcz i'm working on this since morning and not getting any solution yet.)
