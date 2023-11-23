@@ -22,11 +22,7 @@ const fetchDataRouter = require("./router/fetchData");
 const chatRouter = require("./router/chatRoute");
 const messageRouter = require("./router/messageRoute");
 
-// Serve static files
-app.use(express.static(path.join(__dirname, "./client/build")));
-app.get("*", function (req, res) {
-  res.sendFile(path.join(__dirname, "./client/build", "index.html"));
-});
+
 
 app.use(userRouter);
 app.use(contactRouter);
@@ -34,6 +30,11 @@ app.use(fetchDataRouter);
 app.use(chatRouter);
 app.use(messageRouter);
 
+// Serve static files
+app.use(express.static(path.join(__dirname, "./client/build")));
+app.get("*", function (req, res) {
+  res.sendFile(path.join(__dirname, "./client/build", "index.html"));
+});
 
 
 app.listen(port, () => {
