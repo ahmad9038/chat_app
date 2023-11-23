@@ -1,0 +1,51 @@
+.parent {
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.container {
+  width: 250px;
+  margin: 0 auto;
+  background-color: #fff;
+  border-radius: 10px;
+  height: 240px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  top: 30%;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.show {
+  opacity: 1;
+}
+
+.hide {
+  opacity: 0;
+  pointer-events: none; /* Disable interaction with hidden form */
+}
+
+.crossIcon {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  cursor: pointer;
+}
+
+.data {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.data h1 {
+  width: 100%;
+  font-size: 20px;
+}

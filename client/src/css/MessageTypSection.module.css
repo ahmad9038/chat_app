@@ -1,0 +1,24 @@
+.form {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+}
+
+.inputField {
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  height: auto;
+  outline: none;
+  overflow-wrap: break-word;
+}
+
+.sendIcon {
+  margin-left: 10px;
+  cursor: pointer;
+  color: white;
+  font-size: 30px;
+  display: flex;
+}
