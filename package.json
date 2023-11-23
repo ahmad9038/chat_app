@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "start": "node app.js",
-    "server": "nodemon app.js",
-    "client": "npm start --prefix client",
-    "build": "npm run build --prefix client",
-    "dev": "concurrently \"npm start\" \"npm run client\""
-  },
+ "scripts": {
+  "start": "node app.js",
+  "server": "nodemon app.js",
+  "client": "npm --prefix client start",
+  "build": "npm --prefix client run build",
+  "dev": "concurrently \"npm start\" \"npm run client\""
+},
   "author": "",
   "license": "ISC",
   "dependencies": {
